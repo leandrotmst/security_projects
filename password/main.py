@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import string
+import secrets
 
 root = tk.Tk()
 root.title("Password Manager")
@@ -24,16 +26,51 @@ entry.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 12))
 
 def validate_password():
     password = contents.get()
-    if len(password) < 8:
-        status.set("Password is too short! (min 8 characters)")
-    else:
-        status.set("Password length looks good.")
+    if not _password_validator(password):
+        status.set("Password should contain at least 8 characters, one number, one capital letter, and one special character!")
+        return
+    status.set("Password is valid.")
 
 
 def generate_password():
-    contents.set("Test")
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    while True:
+        password = ''.join(secrets.choice(alphabet) for _ in range(10))
+        if (any(c.islower() for c in password)
+                and any(c.isupper() for c in password)
+                and any(c in string.punctuation for c in password)
+                and sum(c.isdigit() for c in password)):
+            break
+    if not _password_validator(password):
+        status.set("Generated password is not valid.")
+        return
+    contents.set(password)
     status.set("Generated a sample password.")
 
+
+def _password_validator(password):
+    if len(password) < 8:
+        return False
+    
+    numbers = 0
+    capital_letters = 0
+    special_characters = 0
+    lower_letters = 0
+
+    for letter in password:
+        if letter.isnumeric():
+            numbers += 1
+        elif letter.islower():
+            lower_letters += 1
+        elif letter.isupper():
+            capital_letters += 1
+        elif letter in string.punctuation:
+            special_characters += 1
+
+    if numbers == 0 or capital_letters == 0 or special_characters == 0:
+        return False
+
+    return True
 
 def clear():
     contents.set("")
@@ -57,7 +94,7 @@ ttk.Button(frame, text="Quit", command=root.destroy).grid(
 )
 
 # Row 3: Feedback label spanning both columns
-ttk.Label(frame, textvariable=status).grid(
+ttk.Label(frame, textvariable=status, wraplength=360).grid(
     row=3, column=0, columnspan=2, pady=(12, 0)
 )
 
